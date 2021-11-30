@@ -1468,11 +1468,18 @@ model_performance
 
 
 # ### Conclusion:
-# I got a maximum R^2 score of 0.877 with DecisionTreeRegressor. If I had more time, I would explore further transformations and fine-tuning like polynomial features and try to increase model performance. 
 # 
-# I would also love to deploy this model with a user-friendly interface.
+# I got a maximum R^2 score of 0.877 with DecisionTreeRegressor. That means that our model can explain 87.7% of the variation in the used car prices. This is a pretty good score for one. That being said, its actual performance would show when it is tested with new data points in the future. 
 # 
-# Lastly, I would be curious to have more historic data and account for COVID's impact on the used car market. We've all witnessed that the pandemic has hit all the broader auto industry hard. The dataset provided had been collected in the early days of COVID.
+# If I had more time, I would explore further transformations and fine-tuning like polynomial features and try to increase model performance. I would also love to deploy this model with a user-friendly interface.
+# 
+# I would be curious to have more historic data and account for COVID's impact on the used car market. We've all witnessed that the pandemic has hit the broader auto industry hard. The dataset provided had been collected in the early days of COVID. If I had more time, I would look for more recent data points in order to check if there is any sign of post-pandemic recovery. More time-series data would also help us perform some predictive analysis on Time to Sell as well.
+# 
+# As I mentioned halfway through the project, I have had my own experience looking for a used car very recently. At that time, I've discovered how valuable CARFAX reports could be. If I had more time, I would have looked for ways to get more recent data with non-expired CARFAX links which I would scrape to extract more information like trim level, passenger, liens and accident claim records. 
+# 
+# More data points could mean more geographic coverage as well. This dataset also covers Ontario with few exceptions. However, Clutch operates in four provinces and should be able to provide estimates. I am pretty sure that used car prices show difference depending on province.
+# 
+# In addition to all the points I made above, I think that the domain knowledge also plays a key part. If I had more time, I would have loved to discuss various realities of the sector with someone experienced in the industry and adjusted my analysis accordingly.
 
 # In[ ]:
 
