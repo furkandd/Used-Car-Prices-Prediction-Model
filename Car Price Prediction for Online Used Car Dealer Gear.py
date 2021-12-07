@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # Building a User Car Prediction Model for Clutch
+# # Building a User Car Price Prediction Model for Gear
 # <br>
 # <br>
 # In this project, I will do some analysis on a sample data of used vehicles and deploy a Machine Learning model to predict vehicle prices by following the steps below.
@@ -9,7 +9,7 @@
 # <br>
 # 1. <b>Import Packages:</b> We'll be importing relevant libraries and packages.
 # <br>
-# 2. <b>Data Upload:</b> We are using a sample data scrape provided by Clutch.
+# 2. <b>Data Upload:</b> We are using a sample data scrape provided by an online used car dealer named Gear.
 # <br>
 # 3. <b>Business Problem:</b> We'll frame the problem based on the dataset description.
 # <br>
@@ -24,7 +24,7 @@
 
 # ### Step 1: Import Packages
 
-# In[124]:
+# In[1]:
 
 
 import datetime
@@ -60,7 +60,7 @@ import statsmodels.api as sm
 
 # ### Step 2: Data Upload
 
-# In[377]:
+# In[2]:
 
 
 cars = pd.read_csv("vehicles.csv")
@@ -73,7 +73,7 @@ cars.head(5)
 
 # ### Step 3: Business Problem
 # 
-# The dataset provided by Clutch online dealership contains market data obtained from listing websites. The dataset contains <b>price</b> variable which is continuous data and tells us about the asking price of each car in the dataset.
+# The dataset provided by Gear online dealership contains market data obtained from listing websites. The dataset contains <b>price</b> variable which is continuous data and tells us about the asking price of each car in the dataset.
 # 
 # Our aim here is to analyze the data and <b>predict the price </b> of a car given that we have other attributes of that vehicle.
 
@@ -92,7 +92,7 @@ cars.head(5)
 
 # #### Check data size
 
-# In[126]:
+# In[3]:
 
 
 print("No. of rows: "+ str(cars.shape[0]))
@@ -103,7 +103,7 @@ print("No. of columns: "+ str(len(cars.columns)))
 
 # #### Check data types of columns
 
-# In[379]:
+# In[4]:
 
 
 pd.set_option("display.max_rows", 10)
@@ -124,7 +124,7 @@ cars.duplicated().sum()
 # 
 # As seen below, there are a lot null values that should be handled carefully. We'll address these issues going forward.
 
-# In[382]:
+# In[6]:
 
 
 pd.set_option("display.max_rows",None)
@@ -166,7 +166,7 @@ print(cars.last_date_seen.max())
 
 # #### Look for the category distribution in categorical columns
 
-# In[385]:
+# In[10]:
 
 
 pd.set_option("display.max_rows",20)
@@ -174,64 +174,58 @@ pd.set_option("display.max_rows",20)
 cars["make"].value_counts()
 
 
-# In[386]:
+# In[11]:
 
 
 cars["model"].value_counts()
 
 
-# In[387]:
+# In[12]:
 
 
 cars.trim.value_counts()
 
 
-# In[388]:
+# In[13]:
 
 
 cars.color.value_counts()
 
 
-# In[389]:
+# In[14]:
 
 
 cars.body_type.value_counts()
 
 
-# In[390]:
+# In[15]:
 
 
 cars.drivetrain.value_counts()
 
 
-# In[391]:
+# In[16]:
 
 
 cars.transmission.value_counts()
 
 
-# In[392]:
+# In[17]:
 
 
 cars.fuel_type.value_counts()
 
 
-# In[393]:
+# In[18]:
 
 
 cars.engine.value_counts()
 
 
-# In[394]:
+# In[19]:
 
 
 cars.city.value_counts()
-
-
-# In[395]:
-
-
-cars.seller_name.value_counts()
 
 
 # #### Initial insights
@@ -257,7 +251,7 @@ cars.seller_name.value_counts()
 # * Let's see the datatypes again and decide what to do!
 # 
 
-# In[396]:
+# In[20]:
 
 
 cars.info()
@@ -265,7 +259,7 @@ cars.info()
 
 #  * First off the bat, let's get the datefields correct. 
 
-# In[22]:
+# In[21]:
 
 
 cars.first_date_seen=pd.to_datetime(cars.first_date_seen)
@@ -274,7 +268,7 @@ cars.last_date_seen=pd.to_datetime(cars.last_date_seen)
 
 # * <b>vin</b> and <b>carfax_url</b> fields have unique values for each and every data point so it's helpful to convert them to boolean. This info will also be relavant in our further analysis.
 
-# In[397]:
+# In[22]:
 
 
 cars['vin_provided'] = cars.vin.apply(lambda x: 0 if pd.isnull(x) else 1)
@@ -285,7 +279,7 @@ cars= cars.drop(columns=['vin','carfax_url'])
 
 # * <b>Trim</b> level has a lot of unique text info for each data point but it is not eligible to be converted into a categorical or a numeric column. So, our best bet is to merge it with the description column so that we can get some insights from the merged field.
 
-# In[398]:
+# In[23]:
 
 
 cars["description"] = cars["trim"].map(str)+ ' ' + cars["description"].map(str)
@@ -296,13 +290,13 @@ cars= cars.drop(columns=['trim'])
 
 # * Color field is an important one but has a lot of unique values that needs a bit of string manipulation.
 
-# In[399]:
+# In[24]:
 
 
 cars.color.value_counts()
 
 
-# In[400]:
+# In[25]:
 
 
 cars.loc[cars['color'].str.contains('white',na=False,flags=re.IGNORECASE), 'color'] = 'White'
@@ -327,7 +321,7 @@ cars.color.value_counts()
 
 # * There are a lot of car manufacturers under <b>make</b> field and the size of the unique list makes it harder to analyze. So, I am going to mask them by tagging smaller brands as 'Other'. This is totally a random threshold. I initially set it to <b>brands with # of records > 100</b> but that was filtering out many sport vehicles and I did not want to exclude them. Instead, I remove those under 15.
 
-# In[401]:
+# In[26]:
 
 
 cars["make"] =              np.where(cars.groupby(["make"])["make"].transform('count') >= 15, 
@@ -338,7 +332,7 @@ cars.make.value_counts()
 
 # * Can't do anything about the <b>model</b> field. There are many unique fields for each car brand and it is not feasible to do any sory of transformation on it. I'll just display the unique values here!
 
-# In[402]:
+# In[27]:
 
 
 cars.model.str.title().value_counts()
@@ -346,7 +340,7 @@ cars.model.str.title().value_counts()
 
 # * <b>Body_type</b> field might help us drive insights from the dataset but it requires a bit of string manipulations. If I have time, I will write a separate function for the code below because this type of cleaning is required for other fields as well. 
 
-# In[403]:
+# In[28]:
 
 
 cars.loc[cars['body_type'].str.contains('truck',na=False,flags=re.IGNORECASE), 'body_type'] = 'Truck'
@@ -362,13 +356,13 @@ cars.body_type.value_counts()
 
 # * <b>Drive_Train</b> columns is also useful one. It also needs a bit of string manipulations. A little domain knowledge might come in handy at this part of the analysis. You can also do online research about what the main drive_train types are and what keywords are used interchangibly for those categories.   
 
-# In[30]:
+# In[29]:
 
 
 cars.drivetrain.value_counts()
 
 
-# In[404]:
+# In[30]:
 
 
 cars.loc[cars.drivetrain == '2WD', 'drivetrain'] = "FWD" # this one is just an assumption. It could be RWD as well!
@@ -378,7 +372,7 @@ cars.drivetrain.value_counts()
 
 # * <b> Transmission </b> field is also a valueable one. We are applying our good old method to do some transformation here as well. 
 
-# In[405]:
+# In[31]:
 
 
 cars.transmission=cars.transmission.astype('str')
@@ -393,7 +387,7 @@ cars.loc[cars.transmission == 'nan', 'transmission'] = None
 
 # * Let's also look at the <b>fuel_type</b> field. 
 
-# In[406]:
+# In[32]:
 
 
 cars['fuel_type'] = cars['fuel_type'].replace(['Premium Unleaded','Gasoline','Gasoline Fuel','Regular Unleaded'],'Gas')
@@ -404,7 +398,7 @@ cars['fuel_type'] = cars['fuel_type'].replace(['Gasoline Hybrid','Gasoline - Hyb
 
 # * For the <b>engine </b> field, we are going to do our transformation. However, due to the way that data points were entered, it is not too feasible to work on every unique record. Instead, we will focus on transforming the field so in a way that we can extract <b># of cylinders</b> as a close proxy in a separate field in the further steps.   
 
-# In[407]:
+# In[33]:
 
 
 cars.loc[cars['engine'].str.contains("4 cyl",na=False,flags=re.IGNORECASE), "engine"] = '4 Cylinder'
@@ -427,14 +421,13 @@ cars.loc[cars['engine'].str.contains("v-8",na=False,flags=re.IGNORECASE), "engin
 cars.loc[~cars.engine.isin(['4 Cylinder','6 Cylinder','8 Cylinder','3 Cylinder','5 Cylinder']),'engine'] = None
 
 
-# * Nothing interesting in this <b>seller_name</b> field because there are all small dealers except for a few big chains. If we had more data points from CLUTCH, we might have been able to calculate a new field and see if it is significant at all. But unfortunately we have not! Also, the largest group in the output below is 'Private' sellers. We already have a separate column for this information. That's why we'll drop this column in the next steps.
+# * Nothing interesting in this <b>seller_name</b> field because there are all small dealers except for a few big chains. The largest group in the output below is 'Private' sellers. We already have a separate column for this information. That's why we'll drop this column in the next steps.
 
-# In[408]:
+# In[34]:
 
 
 cars.loc[cars['seller_name'].str.contains("toyota",na=False,flags=re.IGNORECASE), "seller2"] = 'toyota'
 cars.loc[cars['seller_name'].str.contains("honda",na=False,flags=re.IGNORECASE), "seller2"] = 'honda'
-cars.loc[cars['seller_name'].str.contains("clutch",na=False,flags=re.IGNORECASE), "seller2"] = 'clutch'
 cars.loc[cars['seller_name'].str.contains("dodge",na=False,flags=re.IGNORECASE), "seller2"] = 'dodge'
 cars.loc[cars['seller_name'].str.contains("private",na=False,flags=re.IGNORECASE), "seller2"] = 'private'
 cars.loc[cars['seller_name'].str.contains("ford",na=False,flags=re.IGNORECASE), "seller2"] = 'ford'
@@ -452,20 +445,20 @@ cars.seller2.value_counts()
 # 
 # First, let's see how many we got null values in each field.
 
-# In[409]:
+# In[35]:
 
 
 cars.isnull().sum()
 
 
-# In[410]:
+# In[36]:
 
 
 cars['body_type']=cars.groupby('model')['body_type'].ffill().bfill()
 cars.body_type.value_counts()
 
 
-# In[411]:
+# In[37]:
 
 
 cars['drivetrain']=cars.groupby(['make','model'])['drivetrain'].ffill().bfill()
@@ -473,21 +466,21 @@ cars['drivetrain']=cars.groupby(['make','model'])['drivetrain'].ffill().bfill()
 cars.drivetrain.value_counts()
 
 
-# In[412]:
+# In[38]:
 
 
 cars['transmission']=cars.groupby(['make','model'])['transmission'].ffill().bfill()
 cars.transmission.value_counts()
 
 
-# In[413]:
+# In[39]:
 
 
 cars['fuel_type']=cars.groupby(['make','model'])['fuel_type'].ffill().bfill()
 cars["fuel_type"].value_counts()
 
 
-# In[414]:
+# In[40]:
 
 
 cars['engine']=cars.groupby(['make','model','body_type'])['engine'].ffill().bfill()
@@ -497,7 +490,7 @@ cars= cars.drop(columns=['engine'])
 cars.cylinders.value_counts()
 
 
-# In[416]:
+# In[41]:
 
 
 cars["city"] = cars.city.str.title() #Fixing UPPER, LOWER case inconsistencies.
@@ -520,7 +513,7 @@ cars["toronto_gta"]= np.where(cars.city.str.contains('|'.join(toronto_gta)), 1, 
 cars.toronto_gta.value_counts()
 
 
-# In[417]:
+# In[42]:
 
 
 cars=cars.drop(columns=['seller_name','seller2']) # Dropping seller name columns b/c we're not getting any info from them.  
@@ -528,7 +521,7 @@ cars=cars.drop(columns=['seller_name','seller2']) # Dropping seller name columns
 
 # #### Fix issues in numerical columns
 
-# In[418]:
+# In[43]:
 
 
 cars.describe()
@@ -536,7 +529,7 @@ cars.describe()
 
 # * <b>Year</b>
 
-# In[419]:
+# In[44]:
 
 
 cars[cars.year== 1914] #Checking if 1914 is a data entry or an actual data point.
@@ -545,7 +538,7 @@ cars[cars.year== 1914] #Checking if 1914 is a data entry or an actual data point
 # These two cars look like they are duplicates and they are from Baltimore, a US city out of the scope of this analysis. Let's remove them.
 # 
 
-# In[420]:
+# In[45]:
 
 
 cars=cars[cars.city.str.title()!='Baltimore']
@@ -553,13 +546,13 @@ cars=cars[cars.city.str.title()!='Baltimore']
 
 # Now, it is better that we bring an age field created from the year column.
 
-# In[421]:
+# In[46]:
 
 
 cars["age"]=2021-cars["year"]
 
 
-# In[422]:
+# In[47]:
 
 
 fig,axs=plt.subplots(nrows=2)
@@ -577,7 +570,7 @@ plt.show()
 # 
 # In most provinces in Canada, the minimum age for a car to get vintage license plate is 30.
 
-# In[423]:
+# In[48]:
 
 
 cars.loc[cars.age > 30, "vintage"] = 1
@@ -587,7 +580,7 @@ cars.vintage.value_counts()
 
 # * <b>Mileage</b>
 
-# In[424]:
+# In[49]:
 
 
 pd.set_option('display.float_format', lambda x: '%.0f' % x) #Just a formatting script
@@ -595,20 +588,20 @@ pd.set_option('display.float_format', lambda x: '%.0f' % x) #Just a formatting s
 cars.mileage.describe()
 
 
-# In[425]:
+# In[50]:
 
 
 cars.loc[(cars.mileage==0) & (cars.year < 2019),'mileage']=None # Assuming that old cars can't have 0 km.
 
 
-# In[426]:
+# In[51]:
 
 
 pd.set_option('display.float_format', lambda x: '%.0f' % x)
 cars.mileage.describe()
 
 
-# In[427]:
+# In[52]:
 
 
 ## Again we are subsetting our data. This is not by intuition. I checked the vehicle with the max mileage(3965000).
@@ -619,7 +612,7 @@ cars= cars[cars['mileage'] < 3000000]
 cars.mileage.describe()
 
 
-# In[182]:
+# In[53]:
 
 
 cars[cars['mileage'] > 1000000]
@@ -627,49 +620,49 @@ cars[cars['mileage'] > 1000000]
 #looks like people were putting an extra digit by mistake. We can divide those by 10 and fix this issue.
 
 
-# In[428]:
+# In[54]:
 
 
 cars.loc[(cars.mileage>1000000),'mileage']=cars.mileage/10
 
 
-# In[429]:
+# In[55]:
 
 
 cars.mileage.describe()
 
 
-# In[430]:
+# In[56]:
 
 
 cars.loc[(cars.mileage>500000) & (cars.year > 2015),:] #Let'see what cars we have next in terms of highest odomoter reading.
 
 
-# In[431]:
+# In[57]:
 
 
 cars.loc[(cars.mileage>500000) & (cars.year > 2015),'mileage']=cars.mileage/10 ## same issue with relatively new cars.
 
 
-# In[432]:
+# In[58]:
 
 
 cars.mileage.describe()
 
 
-# In[433]:
+# In[59]:
 
 
 cars[cars.mileage==999999] # Who is this Number-9-lover?
 
 
-# In[434]:
+# In[60]:
 
 
 cars.loc[(cars.mileage==999999),'mileage']=None ## A data error by the looks of it.
 
 
-# In[435]:
+# In[61]:
 
 
 cars.mileage.describe()
@@ -678,14 +671,14 @@ cars.mileage.describe()
 # Someone with more domain knowledge might be able to handle this better. 
 
 
-# In[436]:
+# In[62]:
 
 
 cars.loc[(cars.mileage>0) & (cars.mileage < 500)& (cars.year < 2015),:] 
 # Next, we are investigating olders vehicles with seemingly low KM on them. 
 
 
-# In[437]:
+# In[63]:
 
 
 cars.loc[(cars.mileage>0) & (cars.mileage < 500) & (cars.year < 2015),'mileage']=None
@@ -694,14 +687,14 @@ cars.loc[(cars.mileage>0) & (cars.mileage < 500) & (cars.year < 2015),'mileage']
 # based on other fields.
 
 
-# In[438]:
+# In[64]:
 
 
 cars['mileage'] = cars.groupby(['make','year'])['mileage'].apply(lambda x: x.fillna(x.mean()))
 cars.mileage.isnull().sum()
 
 
-# In[439]:
+# In[65]:
 
 
 cars['mileage'] = cars.groupby(['year'])['mileage'].apply(lambda x: x.fillna(x.mean()))
@@ -711,25 +704,25 @@ cars['mileage'] = cars.groupby(['year'])['mileage'].apply(lambda x: x.fillna(x.m
 
 # * <b>Price</b> 
 
-# In[440]:
+# In[66]:
 
 
 cars.price.describe()
 
 
-# In[441]:
+# In[67]:
 
 
 cars[cars.price>500000] # Surprisingly,nothing looks fishy! All look sport cars and we'll keep them.
 
 
-# In[442]:
+# In[68]:
 
 
 cars[cars.price<500] #Checking to see if there is any data errors on cars cheaper than 500$.
 
 
-# In[443]:
+# In[69]:
 
 
 cars.loc[(cars.price<500) & (cars.description.str.contains('parts')),:]
@@ -737,7 +730,7 @@ cars.loc[(cars.price<500) & (cars.description.str.contains('parts')),:]
 # We're assuming that cheap cars might be up for sale for their parts. If this is the case, we are not interested in them.
 
 
-# In[444]:
+# In[70]:
 
 
 indexes = cars.loc[(cars.price<500) & (cars.description.str.contains('parts')),:].index
@@ -745,13 +738,13 @@ indexes = cars.loc[(cars.price<500) & (cars.description.str.contains('parts')),:
 cars.drop(indexes,inplace=True) # Turns out some of them has 'parts' keyword in the ad description so we can remove them.
 
 
-# In[445]:
+# In[71]:
 
 
 cars[cars.price.isnull()]
 
 
-# In[446]:
+# In[72]:
 
 
 cars['price'] = cars.groupby(['make','model','year'])['price'].apply(lambda x: x.fillna(x.mean()))
@@ -761,13 +754,13 @@ cars['price'] = cars.groupby(['make','model','year'])['price'].apply(lambda x: x
 
 # * <b> Passengers </b>
 
-# In[447]:
+# In[73]:
 
 
 cars.passengers.describe()
 
 
-# In[448]:
+# In[74]:
 
 
 ## turns out this car (Subaru Crosstek) has actually a capacity of 5 passengers. Manually fixing it.
@@ -775,7 +768,7 @@ cars.passengers.describe()
 cars.loc[cars.passengers == 17, 'passengers'] = 5  
 
 
-# In[449]:
+# In[75]:
 
 
 ## turns out 1744 vehicles has mistakenly 0 passenger capacity. This gotta be a mistake. We'll fix that by first
@@ -787,7 +780,7 @@ cars['passengers']=cars.groupby(['make','model','body_type'])['passengers'].ffil
 cars.passengers.value_counts()
 
 
-# In[450]:
+# In[76]:
 
 
 cars=cars.drop(columns=['city','province']) # we drop the city column. 
@@ -797,7 +790,7 @@ cars=cars.drop(columns=['city','province']) # we drop the city column.
 
 # ### Step 6: Data Analysis
 
-# In[451]:
+# In[77]:
 
 
 def classify_price(x):    
@@ -815,13 +808,13 @@ def classify_price(x):
     return "NA"
 
 
-# In[452]:
+# In[78]:
 
 
 cars['classifications'] = cars.price.apply(classify_price)
 
 
-# In[453]:
+# In[79]:
 
 
 # Effect of make to price
@@ -831,7 +824,7 @@ piv = piv[['<10000','10000-30000','30000-50000','>50000']]
 piv = piv.div(piv.sum(axis=1), axis = 0) * 100
 
 
-# In[454]:
+# In[80]:
 
 
 plt.subplots(figsize=(10,15))
@@ -844,7 +837,7 @@ plt.tick_params(right=True, top=True, labeltop=True,rotation=0);
 
 # <b>Insight 1:</b> Premium luxury vehicles such as Aston Martin, Bentley, Rolls-Royce, Ferrari, Tesla, Porsche, Maserati and Lamborghini have overwhelming majority of their cars listed upwards of 50,000\\$. Brands such as Toyota, Honda, Hyundai, Kia and Nissan have their cars mostly listed under the second tier, 10,000\\$ - 30,000\\$. The brands like Saturn, Saab, Suzuki, Smart and Fiat have almost all of their listings under 10,000\\$. This could be due to the lower perception of brand quality in the used market in Canada or perhaps in Ontario in particular.
 
-# In[455]:
+# In[81]:
 
 
 plt.subplots(figsize=(15,5))
@@ -859,7 +852,7 @@ plt.title("Relationship Between Model Age and Price");
 # 
 # <b>Insight 3:</b> Our dataset contains relatively older cars that skew the data a little on the right edge above the red trendline. This should be due to vintage cars for which we already created a new variable earlier. But despite this the Insight 2 still holds. 
 
-# In[456]:
+# In[82]:
 
 
 plt.subplots(figsize=(15,5))
@@ -869,7 +862,7 @@ regline.set_color('red')
 plt.title("Relationship Between Odometer Distance and Price");
 
 
-# In[457]:
+# In[83]:
 
 
 cars.head()
@@ -877,7 +870,7 @@ cars.head()
 
 # <b>Insight 4:</b> The trend is obvious that prices go down as car accumulates more mileage on their odometers.
 
-# In[458]:
+# In[84]:
 
 
 plt.subplots(figsize=(15,5))
@@ -890,7 +883,7 @@ plt.show()
 #     
 # * Private sellers tend to have lower prices.
 
-# In[459]:
+# In[85]:
 
 
 plt.subplots(figsize=(15,5))
@@ -903,7 +896,7 @@ plt.show()
 #     
 # * Selling price does not vary a lot across different body colors. While Yellow, Black and White cars look slightly more expensive, gold-color vehicles sells cheaper than the rest. But again, it is not too much of a difference.
 
-# In[460]:
+# In[86]:
 
 
 plt.subplots(figsize=(15,5))
@@ -916,7 +909,7 @@ plt.show()
 # <b>Insight 7:</b>
 # * Body type is an important differentiator. Roadsters are by far the most expensive cars according to the data. This makes sense because sport cars mostly target more wealthy consumers. Trucks follows roadsters on a descending order. Hatchbacks are listed as most affordable cars while sedans follow hatchback in affordability. The graph also displays that two other sporty-looking body types, namely convertibles and coupes, have larger variance, meaning that their prices could go up and down by a lot.
 
-# In[461]:
+# In[87]:
 
 
 plt.subplots(figsize=(15,5))
@@ -929,7 +922,7 @@ plt.show()
 # <b>Insight 8:</b>
 # * Car prices look similar across different drive train types. That being said, 4WD cars have higher prices than average whereas FWD vehicles stand out as the most affordable type.
 
-# In[462]:
+# In[88]:
 
 
 plt.subplots(figsize=(15,5))
@@ -942,7 +935,7 @@ plt.show()
 # <b>Insight 9:</b>
 # * Transmission types do not make any difference when it comes to price but Manual vehicles sell cheaper than automatic and CVTs in general.
 
-# In[463]:
+# In[89]:
 
 
 plt.subplots(figsize=(15,5))
@@ -955,7 +948,7 @@ plt.show()
 # <b>Insight 10:</b>
 # * As per fuel type, electric cars are more expensive as expected because they are made with high technology. Meanwhile, hybrid and diesel vehicles are above average too. Technology aspect applies for hybrid cars too. About diesel vehicles, I assume it is due to large engine vehicles like pickups using diesel fuels.
 
-# In[464]:
+# In[90]:
 
 
 plt.subplots(figsize=(15,5))
@@ -968,7 +961,7 @@ plt.show()
 # <b>Insight 11:</b>
 # * In terms of passenger capacity, the most popular option is 5. It is the category that is closer to the average the most too. Moving further from 5 to both sides increase price. This should be due to the fact that cars with lower passenger capacity tend to be sport cars and those with higher passenger seats are larger cars like minivans which require a bigger engine with high cost. 
 
-# In[465]:
+# In[91]:
 
 
 plt.subplots(figsize=(15,5))
@@ -981,7 +974,7 @@ plt.show()
 # <b>Insight 12:</b>
 # * An interesting result: if a seller provides VIN number in the listing, its selling price tend to be higher than the others most of the time. Looks like trust is not something you get for free!
 
-# In[466]:
+# In[92]:
 
 
 plt.subplots(figsize=(15,5))
@@ -993,7 +986,7 @@ plt.show()
 # <b>Insight 13:</b>
 # * Same thing for CARFAX report. If it is available, selling prices is mostly higher.
 
-# In[467]:
+# In[93]:
 
 
 plt.subplots(figsize=(15,5))
@@ -1007,7 +1000,7 @@ plt.show()
 # <b>Insight 14:</b>
 # * More cylinders is associated with higher prices. Should be a result of bigger cars with large engine or/and that of sport cars.  
 
-# In[468]:
+# In[94]:
 
 
 plt.subplots(figsize=(15,5))
@@ -1021,7 +1014,7 @@ plt.show()
 # <b>Insight 15:</b>
 # * This is surprising because one can expect vintage cars to be most expensive. However, it is also noteworthy that sport vehicles that skew the data are mostly new cars so two fields should be cancelling out each other's effect. It would be interesting to see the impact a combination of both fields might have. We'll explore that in the modelling phase!   
 
-# In[469]:
+# In[95]:
 
 
 text_list = list(cars.description.astype('str'))
@@ -1031,7 +1024,7 @@ my_stop_words =["car","power","vehicle","available","Please","drive","price","gr
 wordcloud = WordCloud(stopwords=my_stop_words, collocations=False).generate(text)
 
 
-# In[470]:
+# In[96]:
 
 
 plt.figure(figsize=(20,12))
@@ -1052,7 +1045,7 @@ plt.show()
 # * Credit is another common tag that the Wordcloud has captured. Should be purely due to the fact that 3/4 of the vehicles on our dataset is listed by dealers.
 # * Camera, bluetooth, sunroof, leather(seats perhaps) are other features that most cars seem to have.
 
-# In[471]:
+# In[97]:
 
 
 searchfor = ['one owner', 'single owner','one-owner', '1 owner','sole owner','only owner'] #potential tags
@@ -1062,7 +1055,7 @@ cars.loc[cars.one_owner != 1, 'one_owner'] = 0
 cars.one_owner.value_counts()
 
 
-# In[472]:
+# In[98]:
 
 
 plt.subplots(figsize=(15,5))
@@ -1081,7 +1074,7 @@ plt.show()
 # #### Adding new features based on the word cloud
 # * <b>Heated Seats</b>
 
-# In[473]:
+# In[99]:
 
 
 cars.loc[cars['description'].str.contains('heated seats',na=False,flags=re.IGNORECASE), "heated_seats"] = 1
@@ -1089,7 +1082,7 @@ cars.loc[cars.heated_seats != 1, 'heated_seats'] = 0
 cars.heated_seats.value_counts()
 
 
-# In[474]:
+# In[100]:
 
 
 plt.subplots(figsize=(15,5))
@@ -1100,7 +1093,7 @@ plt.show()
 
 # * <b>Sunroof</b>
 
-# In[475]:
+# In[101]:
 
 
 cars.loc[cars['description'].str.contains('sunroof',na=False,flags=re.IGNORECASE), "sunroof"] = 1
@@ -1108,7 +1101,7 @@ cars.loc[cars.sunroof != 1, 'sunroof'] = 0
 cars.sunroof.value_counts()
 
 
-# In[476]:
+# In[102]:
 
 
 plt.subplots(figsize=(15,5))
@@ -1119,7 +1112,7 @@ plt.show()
 
 # * <b>Camera</b>
 
-# In[477]:
+# In[103]:
 
 
 cars.loc[cars['description'].str.contains('camera',na=False,flags=re.IGNORECASE), "camera"] = 1
@@ -1127,7 +1120,7 @@ cars.loc[cars.camera != 1, 'camera'] = 0
 cars.camera.value_counts()
 
 
-# In[478]:
+# In[104]:
 
 
 plt.subplots(figsize=(15,5))
@@ -1138,7 +1131,7 @@ plt.show()
 
 # * One thing I worried a lot about when looking for a used vehicle was whether it had any accients. Let's create a new field called <b>accident_free</b>.
 
-# In[479]:
+# In[105]:
 
 
 searchfor = ['no accident', 'accident free','no-accident', 'accident-free','no damage','no-damage','no dent','no-dent'] 
@@ -1149,7 +1142,7 @@ cars.loc[cars.accident_free != 1, 'accident_free'] = 0
 cars.accident_free.value_counts()
 
 
-# In[480]:
+# In[106]:
 
 
 plt.subplots(figsize=(15,5))
@@ -1160,7 +1153,7 @@ plt.show()
 
 # * <b> Rebuilt status</b>
 
-# In[481]:
+# In[107]:
 
 
 cars.loc[cars['description'].str.contains('rebuilt',na=False,flags=re.IGNORECASE), "rebuilt"] = 1
@@ -1168,7 +1161,7 @@ cars.loc[cars.rebuilt != 1, 'rebuilt'] = 0
 cars.rebuilt.value_counts()
 
 
-# In[303]:
+# In[108]:
 
 
 plt.subplots(figsize=(15,5))
@@ -1177,7 +1170,7 @@ plt.ylabel("Log-Price")
 plt.show() 
 
 
-# In[483]:
+# In[109]:
 
 
 cars.loc[cars['description'].str.contains('clean title',na=False,flags=re.IGNORECASE), "clean_title"] = 1
@@ -1185,7 +1178,7 @@ cars.loc[cars.clean_title != 1, 'clean_title'] = 0
 cars.clean_title.value_counts()
 
 
-# In[484]:
+# In[110]:
 
 
 plt.subplots(figsize=(15,5))
@@ -1196,7 +1189,7 @@ plt.show()
 
 # <b> Insight 18:</b> This is by far the most interesting result from our new variables. The result should have been the other way around. I assume the way we created this column is to blame! We have been able to get title info from only 500 rows (1%) and tagged the rest as NOT HAVING CLEAN TITLE.
 
-# In[485]:
+# In[111]:
 
 
 cars.loc[cars['description'].str.contains('leather seat',na=False,flags=re.IGNORECASE), "leather_seats"] = 1
@@ -1204,7 +1197,7 @@ cars.loc[cars.leather_seats != 1, 'leather_seats'] = 0
 cars.leather_seats.value_counts()
 
 
-# In[486]:
+# In[112]:
 
 
 plt.subplots(figsize=(15,5))
@@ -1213,7 +1206,7 @@ plt.ylabel("Log-Price")
 plt.show() 
 
 
-# In[487]:
+# In[113]:
 
 
 cars.loc[cars['description'].str.contains('bluetooth',na=False,flags=re.IGNORECASE), "bluetooth"] = 1
@@ -1221,7 +1214,7 @@ cars.loc[cars.bluetooth != 1, 'bluetooth'] = 0
 cars.bluetooth.value_counts()
 
 
-# In[488]:
+# In[114]:
 
 
 plt.subplots(figsize=(15,5))
@@ -1230,7 +1223,7 @@ plt.ylabel("Log-Price")
 plt.show() 
 
 
-# In[490]:
+# In[115]:
 
 
 # Sketching our correlating matrix to see if there are any further insights we can drive.
@@ -1253,7 +1246,7 @@ plt.show()
 # 
 # We will now process the data and do some feature engineering for our machine learning models.
 
-# In[491]:
+# In[116]:
 
 
 cars.head()
@@ -1261,14 +1254,14 @@ cars.head()
 
 # * Removing unnecessary columns from my dataset
 
-# In[492]:
+# In[117]:
 
 
 cars_new= cars.drop(columns=['id','first_date_seen','last_date_seen','year','model',
                              'description','longitude','latitude','classifications'])
 
 
-# In[493]:
+# In[118]:
 
 
 cars_new.head()
@@ -1278,13 +1271,13 @@ cars_new.head()
 
 # * In order to have the make field a feasible predictor, I remove vehicles under the 'Other' category that I earlier created for brands which have less than 15 listings under them. They make up around 78 listings in total.
 
-# In[494]:
+# In[119]:
 
 
 cars_new=cars_new[cars_new.make!='Other']
 
 
-# In[495]:
+# In[120]:
 
 
 cars_new.describe()
@@ -1294,13 +1287,13 @@ cars_new.describe()
 # 
 #  <b>Price</b> 
 
-# In[496]:
+# In[121]:
 
 
 sns.boxplot(np.log(cars_new.price)) # A lot of outliers actually. Let's remove them for our model.
 
 
-# In[497]:
+# In[122]:
 
 
 #Define a function to determine outlier boundaries
@@ -1312,7 +1305,7 @@ def outlier_limits(col):
   return UL, LL
 
 
-# In[498]:
+# In[123]:
 
 
 #Apply the function to your data
@@ -1320,19 +1313,19 @@ outlier_limits(cars_new.price)
 UL, LL = outlier_limits(cars_new["price"])
 
 
-# In[499]:
+# In[124]:
 
 
 cars_new=cars_new[(cars_new.price > LL) & (cars_new.price  < UL)]
 
 
-# In[500]:
+# In[125]:
 
 
 sns.boxplot(cars_new.price)
 
 
-# In[501]:
+# In[126]:
 
 
 cars_new.price.describe()
@@ -1340,26 +1333,26 @@ cars_new.price.describe()
 
 #  <b>Mileage</b> 
 
-# In[502]:
+# In[127]:
 
 
 sns.boxplot(np.log(cars_new.price)) # A lot of duplicates here as well. Let's remove them for our model.
 
 
-# In[503]:
+# In[128]:
 
 
 outlier_limits(cars_new.mileage)
 UL, LL = outlier_limits(cars_new["mileage"])
 
 
-# In[504]:
+# In[129]:
 
 
 cars_new=cars_new[(cars_new.mileage > LL) & (cars_new.mileage  < UL)]
 
 
-# In[505]:
+# In[130]:
 
 
 sns.boxplot(cars_new.mileage)
@@ -1367,7 +1360,7 @@ sns.boxplot(cars_new.mileage)
 
 # * Let's get our dummy variables for the categorical variables.
 
-# In[506]:
+# In[131]:
 
 
 dummy_columns=['make','color','body_type','drivetrain','transmission','fuel_type']
@@ -1376,7 +1369,7 @@ cars_new_expanded = pd.get_dummies(cars_new)
 cars_new_expanded.head()
 
 
-# In[507]:
+# In[132]:
 
 
 pd.set_option('display.float_format', lambda x: '%.6f' % x) #Just a formatting script
@@ -1388,7 +1381,7 @@ print(cars_new_expanded_std.shape)
 cars_new_expanded_std.head()
 
 
-# In[508]:
+# In[133]:
 
 
 X_train, X_test, y_train, y_test = train_test_split(cars_new_expanded_std.drop(columns = ['price']), cars_new_expanded_std[['price']])
@@ -1404,7 +1397,7 @@ print(y_test.shape)
 # 
 # I randomly decide that the final number of variables could be anything from 3 to 100.
 
-# In[509]:
+# In[134]:
 
 
 column_names = cars_new_expanded_std.drop(columns = ['price']).columns
@@ -1431,7 +1424,7 @@ sns.lineplot(x = no_of_features, y = r_squared_test, legend = 'full')
 # 
 # I keep k as 60 and let the machine choose best variables.
 
-# In[510]:
+# In[135]:
 
 
 selector = SelectKBest(f_regression, k = 60)
@@ -1440,7 +1433,7 @@ X_test_transformed = selector.transform(X_test)
 column_names[selector.get_support()]
 
 
-# In[511]:
+# In[136]:
 
 
 def regression_model(model):
@@ -1453,7 +1446,7 @@ def regression_model(model):
     return regressor, score
 
 
-# In[512]:
+# In[137]:
 
 
 model_performance = pd.DataFrame(columns = ["Features", "Model", "Score"])
@@ -1477,12 +1470,6 @@ model_performance
 # 
 # As I mentioned halfway through the project, I have had my own experience looking for a used car very recently. At that time, I've discovered how valuable CARFAX reports could be. If I had more time, I would have looked for ways to get more recent data with non-expired CARFAX links which I would scrape to extract more information like trim level, passenger, liens and accident claim records. 
 # 
-# More data points could mean more geographic coverage as well. This dataset also covers Ontario with few exceptions. However, Clutch operates in four provinces and should be able to provide estimates. I am pretty sure that used car prices show difference depending on province.
+# More data points could mean more geographic coverage as well. This dataset also covers Ontario with few exceptions. However, Gear operates in four provinces and should be able to provide estimates. I am pretty sure that used car prices show difference depending on province.
 # 
 # In addition to all the points I made above, I think that the domain knowledge also plays a key part. If I had more time, I would have loved to discuss various realities of the sector with someone experienced in the industry and adjusted my analysis accordingly.
-
-# In[ ]:
-
-
-
-
